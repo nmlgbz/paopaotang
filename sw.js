@@ -1,5 +1,5 @@
 // Offline cache for Q版泡泡堂. Bump CACHE when files change.
-const CACHE = "ppt-v2";
+const CACHE = "ppt-v3";
 const CORE = ["./", "index.html", "ruffle/ruffle.js", "game.swf", "manifest.webmanifest", "apple-touch-icon.png", "icon-192.png"];
 
 self.addEventListener("install", (e) => {

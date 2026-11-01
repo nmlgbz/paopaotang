@@ -817,8 +817,30 @@ body {
     }, { capture: true, passive: false })
   );
   document.addEventListener("gesturestart", (e) => e.preventDefault());
-  document.addEventListener("visibilitychange", () => { if (document.hidden) releaseAll(); });
   window.addEventListener("blur", releaseAll);
+
+  // ---------- leaving the page: mute at once (Ruffle also freezes the game); restore on return ----------
+  let savedVolume = null;
+  const rapi = () => (player ? (typeof player.ruffle === "function" ? player.ruffle() : player) : null);
+  function muteForBackground() {
+    releaseAll();
+    const api = rapi();
+    if (!api || savedVolume !== null) return;
+    try {
+      const v = api.volume;
+      savedVolume = typeof v === "number" && v > 0 ? v : 1;
+      api.volume = 0;
+    } catch (e) {}
+  }
+  function restoreFromBackground() {
+    const api = rapi();
+    if (!api || savedVolume === null) return;
+    try { api.volume = savedVolume; } catch (e) {}
+    savedVolume = null;
+  }
+  document.addEventListener("visibilitychange", () => { if (document.hidden) muteForBackground(); else restoreFromBackground(); });
+  window.addEventListener("pagehide", muteForBackground);
+  window.addEventListener("pageshow", () => { if (!document.hidden) restoreFromBackground(); });
 
   // ---------- actions ----------
   function syncSheet() {
@@ -910,6 +932,8 @@ body {
       showSwfDownload: false,
       warnOnUnsupportedContent: false,
       backgroundColor: "#009900",
+      // Ruffle keeps playing in background tabs by default; "none" freezes the game while the page is hidden.
+      backgroundExecutionMode: "none",
       logLevel: "error"
     };
     Promise.resolve(api.load({ ...cfg, url: "game.swf" })).catch((err) => {
