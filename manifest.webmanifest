@@ -1,0 +1,16 @@
+{
+  "name": "Q版泡泡堂",
+  "short_name": "泡泡堂",
+  "description": "Bomb It（Q版泡泡堂）触屏版",
+  "lang": "zh-CN",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#FFC83D",
+  "theme_color": "#FFC83D",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

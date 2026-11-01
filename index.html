@@ -1,0 +1,674 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="泡泡堂">
+<meta name="theme-color" content="#FFC83D">
+<meta name="description" content="Bomb It（Q版泡泡堂）Flash 游戏的触屏版，用 Ruffle 运行，iPhone 横屏可玩。">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<title>Q版泡泡堂</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap">
+<style>
+/* Layout: a toy handheld. The Flash stage sits in an ink bezel; controls flank it in landscape and sit under it in portrait. One committed look, not themed. */
+:root {
+  --shell: #FFC83D;
+  --shell-edge: #E3A41A;
+  --ink: #1F2238;
+  --ink-soft: #3A4064;
+  --bomb: #EF4E2B;
+  --bomb-hi: #FF8E6E;
+  --bomb-edge: #A9311A;
+  --cream: #FFF6DA;
+  --stage: #009900;
+  --font-display: "ZCOOL KuaiLe", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+  --font-body: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+  --bezel: 6px;
+  --sw: 550px;
+  --sh: 400px;
+  color-scheme: light;
+}
+html {
+  height: 100%;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: var(--shell);
+}
+body { height: 100%; }
+[hidden] { display: none !important; }
+body {
+  margin: 0;
+  background: var(--shell);
+  color: var(--ink);
+  font-family: var(--font-body);
+  overflow: hidden;
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+}
+#app {
+  height: 100%;
+  box-sizing: border-box;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 10px;
+}
+
+/* ---------- Start screen ---------- */
+#start {
+  height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  align-items: center;
+  gap: clamp(16px, 4vw, 48px);
+  max-width: 980px;
+  margin: 0 auto;
+}
+@media (max-aspect-ratio: 1/1) {
+  #start { grid-template-columns: minmax(0, 1fr); align-content: center; }
+}
+.brand { display: grid; gap: 10px; min-width: 0; }
+.brand .logo { display: flex; align-items: center; gap: 12px; }
+.brand svg { width: clamp(52px, 12vmin, 84px); height: auto; flex: none; }
+.brand h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(40px, 11vmin, 76px);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-wrap: balance;
+  text-shadow: 3px 3px 0 var(--shell-edge);
+}
+.brand .sub { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: 0.04em; }
+.spec {
+  margin: 6px 0 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-top: 2px solid var(--ink);
+  border-bottom: 2px solid var(--ink);
+}
+.spec div { padding: 8px 6px 8px 0; min-width: 0; }
+.spec div + div { padding-left: 10px; border-left: 1px solid var(--shell-edge); }
+.spec dt { font-size: 11px; letter-spacing: 0.08em; opacity: 0.75; }
+.spec dd { margin: 2px 0 0; font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.panel {
+  background: var(--cream);
+  border: 3px solid var(--ink);
+  border-radius: 18px;
+  box-shadow: 0 6px 0 var(--ink);
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+.seg { border: 0; margin: 0; padding: 0; display: grid; gap: 8px; min-width: 0; }
+.seg legend { padding: 0; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; margin-bottom: 8px; }
+.seg .opts { display: grid; grid-template-columns: 1fr 1fr; border: 2px solid var(--ink); border-radius: 12px; overflow: hidden; }
+.seg label { position: relative; display: block; cursor: pointer; }
+.seg input { position: absolute; opacity: 0; inset: 0; margin: 0; }
+.seg span {
+  display: block;
+  text-align: center;
+  padding: 10px 6px;
+  font-family: var(--font-display);
+  font-size: 19px;
+}
+.seg label + label span { border-left: 2px solid var(--ink); }
+.seg input:checked + span { background: var(--ink); color: var(--cream); }
+.seg input:focus-visible + span { outline: 3px solid var(--bomb); outline-offset: -5px; }
+#modeHint { margin: 0; font-size: 14px; line-height: 1.5; min-height: 3em; }
+#modeHint b { font-weight: 700; }
+#go {
+  appearance: none;
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  background: var(--bomb);
+  color: var(--cream);
+  font-family: var(--font-display);
+  font-size: 26px;
+  padding: 12px 18px 10px;
+  box-shadow: 0 6px 0 var(--bomb-edge), 0 6px 0 3px var(--ink);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+#go:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--bomb-edge), 0 2px 0 3px var(--ink); }
+#go:focus-visible { outline: 3px solid var(--ink); outline-offset: 4px; }
+.a2hs { margin: 0; font-size: 13px; line-height: 1.5; padding: 8px 10px; border: 2px dashed var(--ink); border-radius: 10px; }
+.tips { margin: 0; padding-left: 1.2em; font-size: 13px; line-height: 1.55; display: grid; gap: 2px; }
+
+/* ---------- Game screen ---------- */
+#game { height: 100%; display: grid; gap: 10px; touch-action: none; }
+#game[data-orient="land"] {
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-areas: "barl stage barr" "left stage right";
+}
+#game[data-orient="port"] {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-areas: "stage stage" "barl barr" "left right";
+}
+.stage {
+  grid-area: stage;
+  align-self: center;
+  justify-self: center;
+  position: relative;
+  padding: var(--bezel);
+  background: var(--ink);
+  border-radius: 14px;
+  box-shadow: 0 5px 0 var(--shell-edge);
+}
+.stage ruffle-player, .stage .screen {
+  display: block;
+  width: var(--sw);
+  height: var(--sh);
+  max-width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--stage);
+}
+.loader {
+  position: absolute;
+  inset: var(--bezel);
+  border-radius: 8px;
+  background: var(--ink);
+  color: var(--cream);
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 12px;
+  text-align: center;
+  padding: 16px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.loader .spin {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  border: 4px solid var(--ink-soft);
+  border-top-color: var(--shell);
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.bar { display: flex; align-items: center; gap: 8px; min-width: 0; flex-wrap: wrap; }
+.barl { grid-area: barl; justify-content: flex-start; }
+.barr { grid-area: barr; justify-content: flex-end; }
+#game[data-orient="land"] .barl, #game[data-orient="land"] .barr { justify-content: center; }
+.chip {
+  appearance: none;
+  border: 2px solid var(--ink);
+  background: var(--cream);
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font: 600 13px/1.2 var(--font-body);
+  white-space: nowrap;
+  cursor: pointer;
+  touch-action: none;
+}
+.chip kbd { font: 700 11px/1 var(--font-body); background: var(--ink); color: var(--cream); border-radius: 4px; padding: 2px 4px; margin-left: 4px; }
+.chip.on { background: var(--ink); color: var(--cream); }
+.chip.on kbd { background: var(--cream); color: var(--ink); }
+
+.side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-width: 0;
+  min-height: 0;
+}
+.left { grid-area: left; }
+.right { grid-area: right; }
+#game[data-orient="port"] .side { justify-content: space-evenly; }
+#game[data-mode="1"] .only2, #game[data-mode="2"] .only1 { display: none; }
+.who { font-family: var(--font-display); font-size: 15px; line-height: 1; }
+
+/* D-pad */
+.pad {
+  --size: clamp(120px, 36vmin, 176px);
+  width: var(--size);
+  height: var(--size);
+  position: relative;
+  flex: none;
+  touch-action: none;
+  cursor: pointer;
+}
+#game[data-mode="2"] .pad { --size: clamp(108px, 30vmin, 150px); }
+#game[data-orient="port"][data-mode="1"] .pad { --size: clamp(130px, 42vw, 190px); }
+.pad .arm, .pad .hub {
+  position: absolute;
+  background: var(--ink);
+  box-shadow: 0 5px 0 var(--ink-soft);
+}
+.pad .arm { width: 34%; height: 34%; }
+.pad .up    { left: 33%; top: 0;   border-radius: 10px 10px 0 0; }
+.pad .down  { left: 33%; bottom: 0; border-radius: 0 0 10px 10px; }
+.pad .left  { top: 33%; left: 0;   border-radius: 10px 0 0 10px; }
+.pad .right { top: 33%; right: 0;  border-radius: 0 10px 10px 0; }
+.pad .hub   { left: 33%; top: 33%; width: 34%; height: 34%; box-shadow: none; }
+.pad .hub::after {
+  content: "";
+  position: absolute;
+  inset: 30%;
+  border-radius: 50%;
+  background: var(--ink-soft);
+}
+.pad .arm::after {
+  content: "";
+  position: absolute;
+  inset: 30%;
+  background: var(--shell);
+  opacity: 0.85;
+}
+.pad .up::after    { clip-path: polygon(50% 15%, 95% 85%, 5% 85%); }
+.pad .down::after  { clip-path: polygon(5% 15%, 95% 15%, 50% 85%); }
+.pad .left::after  { clip-path: polygon(15% 50%, 85% 5%, 85% 95%); }
+.pad .right::after { clip-path: polygon(15% 5%, 85% 50%, 15% 95%); }
+.pad[data-dir="up"] .up, .pad[data-dir="down"] .down,
+.pad[data-dir="left"] .left, .pad[data-dir="right"] .right {
+  background: var(--ink-soft);
+  box-shadow: 0 1px 0 var(--ink-soft);
+  transform: translateY(4px);
+}
+.pad[data-dir="up"] .up::after, .pad[data-dir="down"] .down::after,
+.pad[data-dir="left"] .left::after, .pad[data-dir="right"] .right::after { opacity: 1; background: var(--cream); }
+
+/* Bomb button */
+.bomb {
+  --size: clamp(76px, 24vmin, 112px);
+  width: var(--size);
+  height: var(--size);
+  flex: none;
+  border-radius: 50%;
+  border: 3px solid var(--ink);
+  background: radial-gradient(circle at 34% 30%, var(--bomb-hi) 0 12%, var(--bomb) 46%, var(--bomb-edge) 100%);
+  box-shadow: 0 7px 0 var(--ink);
+  display: grid;
+  place-items: center;
+  touch-action: none;
+  cursor: pointer;
+}
+#game[data-mode="2"] .bomb { --size: clamp(66px, 19vmin, 92px); }
+#game[data-orient="port"][data-mode="1"] .bomb { --size: clamp(92px, 27vw, 124px); }
+.bomb svg { width: 52%; height: auto; pointer-events: none; }
+.bomb.on { transform: translateY(5px); box-shadow: 0 2px 0 var(--ink); }
+.ctl-group { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.cap { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; }
+
+@media (prefers-reduced-motion: reduce) {
+  .loader .spin { animation-duration: 3s; }
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <section id="start" aria-labelledby="title">
+    <div class="brand">
+      <div class="logo">
+        <svg viewBox="0 0 64 64" aria-hidden="true">
+          <path d="M40 14 q6 -10 14 -8" fill="none" stroke="var(--ink)" stroke-width="4" stroke-linecap="round"/>
+          <circle cx="56" cy="6" r="5" fill="var(--bomb)"/>
+          <rect x="33" y="12" width="12" height="9" rx="2" fill="var(--ink-soft)" transform="rotate(30 39 16)"/>
+          <circle cx="28" cy="38" r="22" fill="var(--ink)"/>
+          <circle cx="20" cy="30" r="6" fill="var(--ink-soft)"/>
+        </svg>
+        <h1 id="title">Q版泡泡堂</h1>
+      </div>
+      <p class="sub">Bomb It · iPhone 触屏版</p>
+      <dl class="spec">
+        <div><dt>舞台</dt><dd>550×400</dd></div>
+        <div><dt>帧率</dt><dd>35 fps</dd></div>
+        <div><dt>脚本</dt><dd>AS2</dd></div>
+        <div><dt>关卡</dt><dd>15/20/25</dd></div>
+      </dl>
+    </div>
+
+    <div class="panel">
+      <fieldset class="seg">
+        <legend>按键方案</legend>
+        <div class="opts">
+          <label><input type="radio" name="mode" id="mode1" value="1" checked><span>单人</span></label>
+          <label><input type="radio" name="mode" id="mode2" value="2"><span>双人同屏</span></label>
+        </div>
+      </fieldset>
+      <p id="modeHint"></p>
+      <button id="go" type="button">开始游戏</button>
+      <p id="a2hs" class="a2hs" hidden>在 Safari 点<b>分享</b>按钮，选<b>“添加到主屏幕”</b>。以后从桌面图标打开，就是没有地址栏的全屏模式。</p>
+      <ul class="tips">
+        <li>菜单直接点画面：选 1 PLAYER 或 2 PLAYERS，再选难度。</li>
+        <li>选角色时，十字键左右切换，红色按钮确认。</li>
+        <li>横过来拿手机画面更大，左手移动，右手放泡泡。</li>
+        <li>没声音就点一下画面，再看看静音开关。名字和最高分存在这台手机的浏览器里。</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="game" data-orient="land" data-mode="1" hidden aria-label="游戏">
+    <div class="bar barl">
+      <button class="chip" type="button" data-ctl="mode" id="modeChip">单人按键</button>
+    </div>
+    <div class="stage" id="stage">
+      <div class="loader" id="loader" role="status">
+        <div class="spin" aria-hidden="true"></div>
+        <div id="loaderText">正在加载 Flash 运行环境和游戏<br>首次约 16 MB，请稍等</div>
+      </div>
+    </div>
+    <div class="bar barr">
+      <button class="chip" type="button" data-ctl="pause">暂停<kbd>P</kbd></button>
+      <button class="chip" type="button" data-ctl="fs" id="fsChip" hidden>全屏</button>
+    </div>
+
+    <div class="side left">
+      <div class="ctl-group">
+        <span class="who only2">P1</span>
+        <div class="pad" data-ctl="pad1" aria-label="P1 方向键">
+          <i class="arm up"></i><i class="arm down"></i><i class="arm left"></i><i class="arm right"></i><i class="hub"></i>
+        </div>
+      </div>
+      <div class="ctl-group only2">
+        <div class="bomb" data-ctl="bomb1" aria-label="P1 放泡泡"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="18" cy="24" r="13" fill="var(--ink)"/><path d="M25 13 q4 -7 10 -6" fill="none" stroke="var(--ink)" stroke-width="3" stroke-linecap="round"/><circle cx="14" cy="20" r="3.5" fill="var(--cream)" opacity=".6"/></svg></div>
+        <span class="cap">放泡泡 · 空格</span>
+      </div>
+    </div>
+
+    <div class="side right">
+      <div class="ctl-group only1">
+        <div class="bomb" data-ctl="bomb1" aria-label="放泡泡"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="18" cy="24" r="13" fill="var(--ink)"/><path d="M25 13 q4 -7 10 -6" fill="none" stroke="var(--ink)" stroke-width="3" stroke-linecap="round"/><circle cx="14" cy="20" r="3.5" fill="var(--cream)" opacity=".6"/></svg></div>
+        <span class="cap">放泡泡</span>
+      </div>
+      <div class="ctl-group only2">
+        <span class="who">P2</span>
+        <div class="pad" data-ctl="pad2" aria-label="P2 方向键">
+          <i class="arm up"></i><i class="arm down"></i><i class="arm left"></i><i class="arm right"></i><i class="hub"></i>
+        </div>
+      </div>
+      <div class="ctl-group only2">
+        <div class="bomb" data-ctl="bomb2" aria-label="P2 放泡泡"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="18" cy="24" r="13" fill="var(--ink)"/><path d="M25 13 q4 -7 10 -6" fill="none" stroke="var(--ink)" stroke-width="3" stroke-linecap="round"/><circle cx="14" cy="20" r="3.5" fill="var(--cream)" opacity=".6"/></svg></div>
+        <span class="cap">放泡泡 · 回车</span>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+  // Ruffle settings must exist before ruffle.js runs.
+  window.RufflePlayer = window.RufflePlayer || {};
+  window.RufflePlayer.config = { polyfills: false };
+</script>
+<script src="ruffle/ruffle.js"></script>
+<script>
+(() => {
+  "use strict";
+  const RATIO = 550 / 400;
+
+  // Key codes read from the decompiled SWF (frame 8): 1P = arrows + Space;
+  // 2P = P1 W/A/S/D + Space, P2 arrows + Enter; P pauses (button 538).
+  const KEYS = {
+    left:  { key: "ArrowLeft",  code: "ArrowLeft",  kc: 37 },
+    up:    { key: "ArrowUp",    code: "ArrowUp",    kc: 38 },
+    right: { key: "ArrowRight", code: "ArrowRight", kc: 39 },
+    down:  { key: "ArrowDown",  code: "ArrowDown",  kc: 40 },
+    a: { key: "a", code: "KeyA", kc: 65 },
+    w: { key: "w", code: "KeyW", kc: 87 },
+    d: { key: "d", code: "KeyD", kc: 68 },
+    s: { key: "s", code: "KeyS", kc: 83 },
+    space: { key: " ", code: "Space", kc: 32 },
+    enter: { key: "Enter", code: "Enter", kc: 13 },
+    p: { key: "p", code: "KeyP", kc: 80 }
+  };
+  const ARROWS = { left: "left", up: "up", right: "right", down: "down" };
+  const WASD = { left: "a", up: "w", right: "d", down: "s" };
+  const MAP = {
+    1: { pad1: ARROWS, bomb1: "space" },
+    2: { pad1: WASD, bomb1: "space", pad2: ARROWS, bomb2: "enter" }
+  };
+  const HINTS = {
+    1: "十字键就是<b>方向键</b>，红色按钮就是<b>空格</b>。在游戏菜单里选 1 PLAYER。",
+    2: "左边给 P1（<b>WASD + 空格</b>），右边给 P2（<b>方向键 + 回车</b>）。在游戏菜单里选 2 PLAYERS，两人各握手机一边。"
+  };
+
+  const $ = (s) => document.querySelector(s);
+  const app = $("#app"), start = $("#start"), game = $("#game"), stage = $("#stage");
+  const loader = $("#loader"), loaderText = $("#loaderText"), modeChip = $("#modeChip"), fsChip = $("#fsChip");
+  const modeHint = $("#modeHint");
+
+  let mode = 1;
+  try { const m = Number(localStorage.getItem("ppt-mode")); if (m === 1 || m === 2) mode = m; } catch (e) {}
+  let player = null;
+
+  // ---------- key injection ----------
+  const held = new Set();
+  function sendKey(type, name) {
+    const k = KEYS[name];
+    const ev = new KeyboardEvent(type, { key: k.key, code: k.code, bubbles: true, cancelable: true, composed: true });
+    try {
+      Object.defineProperty(ev, "keyCode", { get: () => k.kc });
+      Object.defineProperty(ev, "which", { get: () => k.kc });
+    } catch (e) {}
+    (player || window).dispatchEvent(ev);
+  }
+  function press(name) { if (!name || held.has(name)) return; held.add(name); sendKey("keydown", name); }
+  function release(name) { if (!name || !held.has(name)) return; held.delete(name); sendKey("keyup", name); }
+  function tapKey(name) { press(name); setTimeout(() => release(name), 80); }
+  function releaseAll() {
+    for (const p of pointers.values()) { if (p.el.dataset.dir !== undefined) p.el.dataset.dir = ""; p.el.classList.remove("on"); }
+    pointers.clear();
+    for (const name of [...held]) release(name);
+    document.querySelectorAll(".pad").forEach((el) => (el.dataset.dir = ""));
+    document.querySelectorAll(".bomb.on, .chip.on").forEach((el) => el.classList.remove("on"));
+  }
+
+  // ---------- touch controls ----------
+  // Handled in a window capture listener registered before Ruffle, so a tap on
+  // a control never reaches Ruffle (which would treat it as clicking away and drop keyboard focus).
+  const pointers = new Map();
+  const ctlOf = (e) => (e.target && e.target.closest ? e.target.closest("[data-ctl]") : null);
+
+  function padDir(p, e) {
+    const r = p.el.getBoundingClientRect();
+    const dx = e.clientX - (r.left + r.width / 2);
+    const dy = e.clientY - (r.top + r.height / 2);
+    if (Math.hypot(dx, dy) < r.width * 0.12) return null;
+    const ax = Math.abs(dx), ay = Math.abs(dy);
+    // Hysteresis: stay on the current axis until the other one clearly wins.
+    const cur = p.dir;
+    if (cur === "left" || cur === "right") { if (ay > ax * 1.3) return dy < 0 ? "up" : "down"; return dx < 0 ? "left" : "right"; }
+    if (cur === "up" || cur === "down") { if (ax > ay * 1.3) return dx < 0 ? "left" : "right"; return dy < 0 ? "up" : "down"; }
+    return ax > ay ? (dx < 0 ? "left" : "right") : (dy < 0 ? "up" : "down");
+  }
+  function padSet(p, dir) {
+    if (p.dir === dir) return;
+    const map = MAP[mode][p.kind];
+    if (p.dir) release(map[p.dir]);
+    if (dir) press(map[dir]);
+    p.dir = dir;
+    p.el.dataset.dir = dir || "";
+  }
+
+  function onDown(e) {
+    const el = ctlOf(e);
+    if (!el) return;
+    e.stopImmediatePropagation();
+    if (e.cancelable) e.preventDefault();
+    const kind = el.dataset.ctl;
+    const p = { el, kind, dir: null, id: e.pointerId };
+    pointers.set(e.pointerId, p);
+    try { el.setPointerCapture(e.pointerId); } catch (err) {}
+    if (kind.startsWith("pad")) padSet(p, padDir(p, e));
+    else if (kind.startsWith("bomb")) { press(MAP[mode][kind]); el.classList.add("on"); }
+    else el.classList.add("on");
+  }
+  function onMove(e) {
+    const p = pointers.get(e.pointerId);
+    if (!p) return;
+    e.stopImmediatePropagation();
+    if (e.cancelable) e.preventDefault();
+    if (p.kind.startsWith("pad")) padSet(p, padDir(p, e));
+  }
+  function onUp(e) {
+    const p = pointers.get(e.pointerId);
+    if (!p) return;
+    e.stopImmediatePropagation();
+    if (e.cancelable) e.preventDefault();
+    pointers.delete(e.pointerId);
+    if (p.kind.startsWith("pad")) padSet(p, null);
+    else if (p.kind.startsWith("bomb")) {
+      release(MAP[mode][p.kind]);
+      if (![...pointers.values()].some((q) => q.el === p.el)) p.el.classList.remove("on");
+    } else {
+      p.el.classList.remove("on");
+      if (e.type === "pointerup") action(p.kind);
+    }
+  }
+  window.addEventListener("pointerdown", onDown, true);
+  window.addEventListener("pointermove", onMove, true);
+  window.addEventListener("pointerup", onUp, true);
+  window.addEventListener("pointercancel", onUp, true);
+  // Swallow the touch/mouse/click events that follow a control tap.
+  ["touchstart", "touchmove", "touchend", "mousedown", "mouseup", "click", "dblclick", "contextmenu"].forEach((t) =>
+    window.addEventListener(t, (e) => {
+      if (!ctlOf(e)) return;
+      e.stopImmediatePropagation();
+      if (e.cancelable) e.preventDefault();
+    }, { capture: true, passive: false })
+  );
+  document.addEventListener("gesturestart", (e) => e.preventDefault());
+  document.addEventListener("visibilitychange", () => { if (document.hidden) releaseAll(); });
+  window.addEventListener("blur", releaseAll);
+
+  function action(kind) {
+    if (kind === "pause") tapKey("p");
+    else if (kind === "mode") setMode(mode === 1 ? 2 : 1);
+    else if (kind === "fs") toggleFullscreen();
+  }
+
+  // ---------- mode ----------
+  function setMode(m) {
+    releaseAll();
+    mode = m;
+    game.dataset.mode = String(m);
+    modeChip.textContent = m === 1 ? "单人按键 ⇄ 双人" : "双人按键 ⇄ 单人";
+    modeHint.innerHTML = HINTS[m];
+    const r = document.getElementById("mode" + m);
+    if (r) r.checked = true;
+    try { localStorage.setItem("ppt-mode", String(m)); } catch (e) {}
+    layout();
+  }
+  document.querySelectorAll('input[name="mode"]').forEach((r) =>
+    r.addEventListener("change", () => setMode(Number(r.value)))
+  );
+
+  // ---------- layout ----------
+  function layout() {
+    if (game.hidden) return;
+    const cs = getComputedStyle(app);
+    const W = app.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    const H = app.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+    const land = W > H * 1.1;
+    game.dataset.orient = land ? "land" : "port";
+    const bez = 12, gap = 10;
+    let w;
+    if (land) {
+      const side = mode === 2 ? Math.min(Math.max(W * 0.2, 128), 220) : Math.min(Math.max(W * 0.17, 120), 210);
+      w = Math.min(W - 2 * side - 2 * gap - bez, (H - bez) * RATIO);
+    } else {
+      const bar = 40, ctl = mode === 2 ? 270 : 220;
+      w = Math.min(W - bez, (H - bar - ctl - 2 * gap - bez) * RATIO);
+    }
+    w = Math.max(220, Math.floor(w));
+    const h = Math.floor(w / RATIO);
+    document.documentElement.style.setProperty("--sw", w + "px");
+    document.documentElement.style.setProperty("--sh", h + "px");
+  }
+  window.addEventListener("resize", layout);
+  window.addEventListener("orientationchange", () => setTimeout(layout, 250));
+
+  // ---------- fullscreen (iPad / desktop only; iPhone Safari has no element fullscreen) ----------
+  const fsTarget = document.documentElement;
+  const canFs = !!(fsTarget.requestFullscreen || fsTarget.webkitRequestFullscreen) && (document.fullscreenEnabled || document.webkitFullscreenEnabled);
+  fsChip.hidden = !canFs;
+  function toggleFullscreen() {
+    const cur = document.fullscreenElement || document.webkitFullscreenElement;
+    try {
+      if (cur) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+      else {
+        const r = (fsTarget.requestFullscreen || fsTarget.webkitRequestFullscreen).call(fsTarget);
+        if (r && r.catch) r.catch(() => {});
+      }
+    } catch (e) {}
+  }
+
+  // ---------- boot ----------
+  function boot() {
+    start.hidden = true;
+    game.hidden = false;
+    setMode(mode);
+    if (player) return;
+    if (!window.RufflePlayer || !window.RufflePlayer.newest) {
+      loaderText.textContent = "Flash 运行环境没加载出来。请检查网络后刷新页面。";
+      return;
+    }
+    const ruffle = window.RufflePlayer.newest();
+    player = ruffle.createPlayer();
+    player.setAttribute("aria-label", "Q版泡泡堂 游戏画面");
+    stage.insertBefore(player, loader);
+    const done = () => { loader.hidden = true; };
+    player.addEventListener("loadedmetadata", done);
+    player.addEventListener("loadeddata", done);
+    const api = typeof player.ruffle === "function" ? player.ruffle() : player;
+    const cfg = {
+      swfFileName: "game.swf",
+      autoplay: "on",
+      unmuteOverlay: "visible",
+      splashScreen: false,
+      letterbox: "on",
+      scale: "showAll",
+      forceScale: true,
+      contextMenu: "off",
+      openUrlMode: "deny",
+      showSwfDownload: false,
+      warnOnUnsupportedContent: false,
+      backgroundColor: "#009900",
+      logLevel: "error"
+    };
+    Promise.resolve(api.load({ ...cfg, url: "game.swf" })).catch((err) => {
+      loader.hidden = false;
+      loaderText.textContent = "游戏加载失败：" + (err && err.message ? err.message : err) + "。请刷新页面重试。";
+    });
+    layout();
+  }
+  $("#go").addEventListener("click", boot);
+
+  // ---------- home screen + offline ----------
+  const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const standalone = window.navigator.standalone === true || (window.matchMedia && matchMedia("(display-mode: standalone)").matches);
+  document.getElementById("a2hs").hidden = !(isIOS && !standalone);
+  if ("serviceWorker" in navigator && location.protocol === "https:") {
+    window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+  }
+
+  setMode(mode);
+})();
+</script>
+
+</body>
+</html>
